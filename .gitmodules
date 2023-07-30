@@ -1,0 +1,7 @@
+[submodule "macropad/pyhidapi"]
+	path = macropad/pyhidapi
+	url = https://github.com/apmorton/pyhidapi
+[submodule "macropad/stream2"]
+	path = macropad/stream2
+	url = https://github.com/encukou/qmk_firmware
+	branch = stream2
