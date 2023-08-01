@@ -12,8 +12,8 @@ RAW_EPSIZE = 32
 print(sys.executable)
 print(sys.version_info)
 
-def go(*args, **kwargs):
-    print('go', args, kwargs)
+def send(*colors):
+    print('send', colors)
 
     for dev_info in hid.enumerate(vid, pid):
         print(dev_info)
@@ -23,10 +23,11 @@ def go(*args, **kwargs):
     else:
         print('Not found...')
         return
-    report = b''.join([
-        b'R' if obspython.obs_frontend_recording_active() else b'r',
-        b'L' if obspython.obs_frontend_streaming_active() else b'l',
-    ])
+    report = (
+        b'\0'
+        + b''.join(bytes((i, *color)) for i, color in enumerate(colors))
+        + b'\xff'
+    )
 
     with hid.Device(path=path) as h:
         summary = '\n'.join([
@@ -38,7 +39,13 @@ def go(*args, **kwargs):
         ])
         print(summary)
 
-        h.write(report.ljust(RAW_EPSIZE))
+        h.write(report.ljust(RAW_EPSIZE, b'\xff'))
+
+def go(*args, **kwargs):
+    send(
+        (255, 0, 0) if obspython.obs_frontend_recording_active() else (0, 128, 128),
+        (255, 0, 0) if obspython.obs_frontend_streaming_active() else (0, 128, 128),
+    )
 
 def script_description():
   return "QMK Macropad integration"
@@ -50,6 +57,8 @@ def script_properties():
 
 def script_load(_props):
     obspython.obs_frontend_add_event_callback(go)
+    go()
 
 def script_unload():
-    pass
+    # Reset colours
+    send((255, 255, 255), (255, 255, 255))
